@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>下午值班表</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f5f3ee;
+      --surface: #ffffff;
+      --surface2: #faf9f6;
+      --border: #e2ddd5;
+      --text: #1a1814;
+      --text-muted: #8c8680;
+      --accent: #2d6a4f;
+      --accent-light: #e8f4ef;
+      --accent2: #e76f51;
+      --filled: #d8f3dc;
+      --filled-text: #1b4332;
+      --shadow: 0 2px 12px rgba(0,0,0,0.06);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--accent);
+      color: #fff;
+      padding: 20px 24px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 16px rgba(45,106,79,0.25);
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .header-top h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .header-top .tag {
+      background: rgba(255,255,255,0.18);
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.06em;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .ctrl-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .ctrl-group label {
+      font-size: 0.7rem;
+      opacity: 0.8;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .ctrl-group input, .ctrl-group select {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      font-family: 'Noto Sans TC', sans-serif;
+      outline: none;
+      transition: background 0.2s;
+      height: 36px;
+    }
+
+    .ctrl-group input:focus, .ctrl-group select:focus {
+      background: rgba(255,255,255,0.25);
+    }
+
+    .ctrl-group input[type="date"] {
+      color-scheme: dark;
+      width: 160px;
+    }
+
+    .ctrl-group select {
+      width: 90px;
+    }
+
+    .ctrl-group select option {
+      color: var(--text);
+      background: #fff;
+    }
+
+    .sync-badge {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      opacity: 0.85;
+    }
+
+    .sync-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #52b788;
+      box-shadow: 0 0 0 0 rgba(82,183,136,0.4);
+      animation: pulse 2s infinite;
+    }
+
+    .sync-dot.offline { background: #e76f51; animation: none; }
+    .sync-dot.loading { background: #ffd166; animation: none; }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(82,183,136,0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(82,183,136,0); }
+      100% { box-shadow: 0 0 0 0 rgba(82,183,136,0); }
+    }
+
+    /* ── Main ── */
+    main { padding: 20px 16px 40px; max-width: 1100px; margin: 0 auto; }
+
+    /* ── Desktop Table ── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 560px;
+    }
+
+    thead tr {
+      background: var(--surface2);
+    }
+
+    th {
+      padding: 12px 14px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    th.dept-header {
+      text-align: left;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.82rem;
+      min-width: 90px;
+    }
+
+    th.date-header .date-day {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text);
+      font-weight: 600;
+      font-family: 'DM Mono', monospace;
+    }
+
+    th.date-header .date-week {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    th.date-header.today-col .date-day {
+      color: var(--accent);
+    }
+
+    td {
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      padding: 0;
+      vertical-align: middle;
+    }
+
+    td:last-child { border-right: none; }
+    tr:last-child td { border-bottom: none; }
+
+    .dept-cell {
+      padding: 12px 14px;
+      font-weight: 500;
+      font-size: 0.88rem;
+      background: var(--surface2);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 100%;
+    }
+
+    .dept-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .duty-cell {
+      cursor: pointer;
+      min-width: 90px;
+      height: 52px;
+      position: relative;
+      transition: background 0.15s;
+    }
+
+    .duty-cell:hover { background: var(--accent-light); }
+
+    .duty-cell.filled { background: var(--filled); }
+    .duty-cell.filled:hover { background: #c7edcc; }
+
+    .duty-cell.editing { background: var(--accent-light); }
+
+    .cell-text {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--filled-text);
+      padding: 0 10px;
+    }
+
+    .cell-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      font-size: 0.78rem;
+      color: var(--border);
+      padding: 0 6px;
+    }
+
+    .cell-input {
+      width: 100%;
+      height: 100%;
+      border: 2px solid var(--accent);
+      border-radius: 0;
+      background: #fff;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 0.9rem;
+      text-align: center;
+      outline: none;
+      padding: 0 8px;
+    }
+
+    /* ── Mobile Cards ── */
+    .cards-wrap { display: none; flex-direction: column; gap: 12px; }
+
+    .day-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .day-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .day-card-header:active { background: var(--accent-light); }
+
+    .day-card-header .day-date {
+      font-family: 'DM Mono', monospace;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .day-card-header .day-date.today { color: var(--accent); }
+
+    .day-card-header .day-week {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-left: 8px;
+    }
+
+    .day-card-header .day-status {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .day-card-header .filled-count {
+      background: var(--filled);
+      color: var(--filled-text);
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .chevron {
+      transition: transform 0.25s;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .day-card.open .chevron { transform: rotate(180deg); }
+
+    .day-card-body {
+      display: none;
+      padding: 4px 0;
+    }
+
+    .day-card.open .day-card-body { display: block; }
+
+    .card-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .card-row:last-child { border-bottom: none; }
+
+    .card-dept {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      min-width: 72px;
+      flex-shrink: 0;
+    }
+
+    .card-name {
+      flex: 1;
+      text-align: right;
+    }
+
+    .card-name-text {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--filled-text);
+      background: var(--filled);
+      padding: 4px 12px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    .card-name-empty {
+      font-size: 0.8rem;
+      color: var(--border);
+    }
+
+    .card-edit-btn {
+      background: var(--accent-light);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--accent);
+      font-size: 0.78rem;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 500;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+
+    .card-edit-btn:active { background: #c7edcc; }
+
+    .card-input-wrap {
+      flex: 1;
+      display: flex;
+      gap: 6px;
+    }
+
+    .card-input {
+      flex: 1;
+      border: 1.5px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 5px 10px;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .card-save-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 5px 12px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    /* ── Loading / Empty ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--text);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 24px;
+      font-size: 0.85rem;
+      z-index: 9999;
+      transition: transform 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .table-wrap { display: none; }
+      .cards-wrap { display: flex; }
+      header { padding: 14px 14px 12px; }
+      .header-top h1 { font-size: 1.05rem; }
+      .controls { gap: 8px; }
+      .ctrl-group input[type="date"] { width: 140px; font-size: 0.82rem; }
+      .ctrl-group select { width: 76px; font-size: 0.82rem; }
+      .sync-badge { display: none; }
+      main { padding: 14px 10px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>📋 下午值班表</h1>
+    <span class="tag">寒暑假</span>
+  </div>
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>起始日期</label>
+      <input type="date" id="startDate" />
+    </div>
+    <div class="ctrl-group">
+      <label>天數</label>
+      <select id="dayCount">
+        <option value="5">5 天</option>
+        <option value="7">7 天</option>
+        <option value="10">10 天</option>
+        <option value="14">14 天</option>
+        <option value="20">20 天</option>
+        <option value="25">25 天</option>
+        <option value="30">30 天</option>
+        <option value="40">40 天</option>
+        <option value="45">45 天</option>
+      </select>
+    </div>
+    <div class="sync-badge">
+      <div class="sync-dot loading" id="syncDot"></div>
+      <span id="syncText">連線中…</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="content"></div>
+</main>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ── Firebase Config ──────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCiizhZh6A3-CgD4RBkz9h7hapLruGKYdM",
+  authDomain: "sjps-dutyschedule.firebaseapp.com",
+  projectId: "sjps-dutyschedule",
+  storageBucket: "sjps-dutyschedule.firebasestorage.app",
+  messagingSenderId: "550906925883",
+  appId: "1:550906925883:web:241201f262f37470e65d1e",
+  measurementId: "G-4XN2N8RV7T"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ── Constants ────────────────────────────────────────────
+const DEPTS = [
+  { id: 'academic',  name: '教務處', color: '#2d6a4f' },
+  { id: 'student',   name: '學務處', color: '#e76f51' },
+  { id: 'general',   name: '總務處', color: '#457b9d' },
+  { id: 'guidance',  name: '輔導室', color: '#a8834f' },
+];
+
+const WEEK_DAYS = ['日','一','二','三','四','五','六'];
+const CONFIG_DOC = 'config/settings';
+const DATA_DOC   = 'dutyData/schedule';
+
+// ── State ────────────────────────────────────────────────
+let schedule = {};       // { "2025-07-01": { academic: "王小明", ... } }
+let unsubscribe = null;
+let activeInput = null;  // { dateStr, deptId, el }
+
+// ── DOM refs ─────────────────────────────────────────────
+const startDateEl = document.getElementById('startDate');
+const dayCountEl  = document.getElementById('dayCount');
+const contentEl   = document.getElementById('content');
+const syncDot     = document.getElementById('syncDot');
+const syncText    = document.getElementById('syncText');
+
+// ── Helpers ──────────────────────────────────────────────
+function dateStr(d) {
+  return d.toISOString().split('T')[0];
+}
+
+function getDates() {
+  const start = new Date(startDateEl.value + 'T00:00:00');
+  const count = parseInt(dayCountEl.value);
+  const dates = [];
+  if (isNaN(start.getTime())) return dates;
+  for (let i = 0; i < count; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    dates.push(d);
+  }
+  return dates;
+}
+
+function todayStr() {
+  return dateStr(new Date());
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function setSyncStatus(status) {
+  syncDot.className = 'sync-dot ' + status;
+  syncText.textContent = status === 'loading' ? '連線中…' :
+                         status === 'offline' ? '離線' : '即時同步';
+}
+
+// ── Firebase: load config ─────────────────────────────────
+async function loadConfig() {
+  try {
+    const snap = await getDoc(doc(db, CONFIG_DOC));
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.startDate) startDateEl.value = data.startDate;
+      if (data.dayCount)  dayCountEl.value  = String(data.dayCount);
+    }
+  } catch(e) { /* use defaults */ }
+}
+
+async function saveConfig() {
+  try {
+    await setDoc(doc(db, CONFIG_DOC), {
+      startDate: startDateEl.value,
+      dayCount:  parseInt(dayCountEl.value)
+    });
+  } catch(e) {}
+}
+
+// ── Firebase: realtime listener ───────────────────────────
+function subscribeData() {
+  if (unsubscribe) unsubscribe();
+  setSyncStatus('loading');
+  unsubscribe = onSnapshot(doc(db, DATA_DOC), (snap) => {
+    schedule = snap.exists() ? (snap.data() || {}) : {};
+    setSyncStatus('online');
+    render();
+  }, () => setSyncStatus('offline'));
+}
+
+async function saveCell(dateKey, deptId, value) {
+  try {
+    await setDoc(doc(db, DATA_DOC), {
+      [`${dateKey}__${deptId}`]: value
+    }, { merge: true });
+  } catch(e) {
+    showToast('儲存失敗，請檢查網路');
+  }
+}
+
+function getValue(dateKey, deptId) {
+  return schedule[`${dateKey}__${deptId}`] || '';
+}
+
+// ── Render ───────────────────────────────────────────────
+function render() {
+  const dates = getDates();
+  if (!dates.length) {
+    contentEl.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📅</div>
+        <p>請先設定起始日期</p>
+      </div>`;
+    return;
+  }
+  const isMobile = window.innerWidth <= 640;
+  contentEl.innerHTML = '';
+  if (isMobile) {
+    renderCards(dates);
+  } else {
+    renderTable(dates);
+  }
+}
+
+// ── Table (Desktop) ──────────────────────────────────────
+function renderTable(dates) {
+  const wrap = document.createElement('div');
+  wrap.className = 'table-wrap';
+
+  const table = document.createElement('table');
+
+  // thead
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  const thDept = document.createElement('th');
+  thDept.className = 'dept-header';
+  thDept.textContent = '處室 / 日期';
+  headRow.appendChild(thDept);
+
+  dates.forEach(d => {
+    const th = document.createElement('th');
+    th.className = 'date-header' + (dateStr(d) === todayStr() ? ' today-col' : '');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    th.innerHTML = `<span class="date-day">${mm}/${dd}</span><span class="date-week">（${WEEK_DAYS[d.getDay()]}）</span>`;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  // tbody
+  const tbody = document.createElement('tbody');
+  DEPTS.forEach(dept => {
+    const tr = document.createElement('tr');
+
+    const tdDept = document.createElement('td');
+    tdDept.innerHTML = `<div class="dept-cell"><div class="dept-dot" style="background:${dept.color}"></div>${dept.name}</div>`;
+    tr.appendChild(tdDept);
+
+    dates.forEach(d => {
+      const key = dateStr(d);
+      const val = getValue(key, dept.id);
+      const td = document.createElement('td');
+      td.className = 'duty-cell' + (val ? ' filled' : '');
+      td.dataset.date = key;
+      td.dataset.dept = dept.id;
+
+      td.innerHTML = val
+        ? `<div class="cell-text">${val}</div>`
+        : `<div class="cell-placeholder">點擊填寫</div>`;
+
+      td.addEventListener('click', () => startEdit(td, key, dept.id));
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  contentEl.appendChild(wrap);
+}
+
+function startEdit(td, dateKey, deptId) {
+  if (td.classList.contains('editing')) return;
+
+  // cancel previous
+  if (activeInput) cancelEdit(activeInput);
+
+  const val = getValue(dateKey, deptId);
+  td.classList.add('editing');
+  td.innerHTML = `<input class="cell-input" type="text" value="${val}" placeholder="輸入姓名" maxlength="10" />`;
+  const input = td.querySelector('input');
+  input.focus();
+  input.select();
+
+  activeInput = { td, dateKey, deptId };
+
+  input.addEventListener('blur', () => commitEdit(activeInput, input.value.trim()));
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') { cancelEdit(activeInput); }
+  });
+}
+
+function cancelEdit({ td, dateKey, deptId }) {
+  const val = getValue(dateKey, deptId);
+  td.classList.remove('editing');
+  td.className = 'duty-cell' + (val ? ' filled' : '');
+  td.innerHTML = val
+    ? `<div class="cell-text">${val}</div>`
+    : `<div class="cell-placeholder">點擊填寫</div>`;
+  activeInput = null;
+}
+
+async function commitEdit({ td, dateKey, deptId }, newVal) {
+  td.classList.remove('editing');
+  td.className = 'duty-cell' + (newVal ? ' filled' : '');
+  td.innerHTML = newVal
+    ? `<div class="cell-text">${newVal}</div>`
+    : `<div class="cell-placeholder">點擊填寫</div>`;
+  td.addEventListener('click', () => startEdit(td, dateKey, deptId));
+  activeInput = null;
+
+  const oldVal = getValue(dateKey, deptId);
+  if (newVal !== oldVal) {
+    schedule[`${dateKey}__${deptId}`] = newVal;
+    await saveCell(dateKey, deptId, newVal);
+    if (newVal) showToast(`✅ 已儲存：${newVal}`);
+  }
+}
+
+// ── Cards (Mobile) ───────────────────────────────────────
+function renderCards(dates) {
+  const wrap = document.createElement('div');
+  wrap.className = 'cards-wrap';
+
+  dates.forEach(d => {
+    const key = dateStr(d);
+    const isToday = key === todayStr();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+
+    const filledCount = DEPTS.filter(dep => getValue(key, dep.id)).length;
+
+    const card = document.createElement('div');
+    card.className = 'day-card';
+
+    card.innerHTML = `
+      <div class="day-card-header">
+        <div>
+          <span class="day-date${isToday ? ' today' : ''}">${mm}/${dd}</span>
+          <span class="day-week">（${WEEK_DAYS[d.getDay()]}）</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${filledCount > 0 ? `<span class="filled-count">${filledCount}/4</span>` : ''}
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="day-card-body" id="body-${key}"></div>
+    `;
+
+    const header = card.querySelector('.day-card-header');
+    header.addEventListener('click', () => {
+      card.classList.toggle('open');
+    });
+
+    // open today by default
+    if (isToday) card.classList.add('open');
+
+    const body = card.querySelector(`#body-${key}`);
+    DEPTS.forEach(dept => {
+      const val = getValue(key, dept.id);
+      const row = document.createElement('div');
+      row.className = 'card-row';
+      row.dataset.date = key;
+      row.dataset.dept = dept.id;
+      row.innerHTML = `
+        <div class="card-dept">
+          <div class="dept-dot" style="background:${dept.color}"></div>
+          ${dept.name}
+        </div>
+        <div class="card-name" id="name-${key}-${dept.id}">
+          ${val
+            ? `<span class="card-name-text">${val}</span>`
+            : `<span class="card-name-empty">未填寫</span>`}
+        </div>
+        <button class="card-edit-btn" data-date="${key}" data-dept="${dept.id}">
+          ${val ? '修改' : '填寫'}
+        </button>
+      `;
+      body.appendChild(row);
+    });
+
+    wrap.appendChild(card);
+  });
+
+  contentEl.appendChild(wrap);
+
+  // delegate edit buttons
+  wrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('.card-edit-btn');
+    if (!btn) return;
+    const dateKey = btn.dataset.date;
+    const deptId  = btn.dataset.dept;
+    startCardEdit(btn, dateKey, deptId);
+  });
+}
+
+function startCardEdit(btn, dateKey, deptId) {
+  const nameDiv = document.getElementById(`name-${dateKey}-${deptId}`);
+  if (!nameDiv) return;
+  const val = getValue(dateKey, deptId);
+
+  nameDiv.innerHTML = `
+    <div class="card-input-wrap">
+      <input class="card-input" type="text" value="${val}" placeholder="輸入姓名" maxlength="10" />
+      <button class="card-save-btn">確認</button>
+    </div>
+  `;
+  btn.style.display = 'none';
+  const input = nameDiv.querySelector('input');
+  input.focus(); input.select();
+
+  const save = async () => {
+    const newVal = input.value.trim();
+    schedule[`${dateKey}__${deptId}`] = newVal;
+    nameDiv.innerHTML = newVal
+      ? `<span class="card-name-text">${newVal}</span>`
+      : `<span class="card-name-empty">未填寫</span>`;
+    btn.textContent = newVal ? '修改' : '填寫';
+    btn.style.display = '';
+
+    // update filled count badge
+    const key = dateKey;
+    const count = DEPTS.filter(d => getValue(key, d.id)).length;
+    const card = btn.closest('.day-card');
+    let badge = card.querySelector('.filled-count');
+    if (count > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'filled-count';
+        card.querySelector('.day-card-header > div:last-child').prepend(badge);
+      }
+      badge.textContent = `${count}/4`;
+    } else if (badge) badge.remove();
+
+    if (newVal !== val) {
+      await saveCell(dateKey, deptId, newVal);
+      if (newVal) showToast(`✅ 已儲存：${newVal}`);
+    }
+  };
+
+  nameDiv.querySelector('.card-save-btn').addEventListener('click', save);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
+}
+
+// ── Init ─────────────────────────────────────────────────
+async function init() {
+  // default: today, 10 days
+  const today = new Date();
+  startDateEl.value = dateStr(today);
+  dayCountEl.value = '10';
+
+  await loadConfig();
+  subscribeData();
+
+  startDateEl.addEventListener('change', () => { saveConfig(); render(); });
+  dayCountEl.addEventListener('change',  () => { saveConfig(); render(); });
+  window.addEventListener('resize', render);
+}
+
+init();
+</script>
+</body>
+</html>
