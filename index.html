@@ -80,10 +80,75 @@
       100% { box-shadow: 0 0 0 0   rgba(82,183,136,0);   }
     }
 
+    .print-btn { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.14); border: 1.5px solid rgba(255,255,255,0.32); color: #fff; border-radius: 20px; padding: 4px 12px 4px 9px; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; font-size: 0.75rem; font-weight: 500; transition: background 0.2s; user-select: none; white-space: nowrap; flex-shrink: 0; }
+    .print-btn:hover { background: rgba(255,255,255,0.24); }
+    .print-label { font-size: 0.75rem; }
+
     .edit-toggle { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.14); border: 1.5px solid rgba(255,255,255,0.32); color: #fff; border-radius: 20px; padding: 4px 12px 4px 9px; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; font-size: 0.75rem; font-weight: 500; transition: background 0.2s; user-select: none; white-space: nowrap; flex-shrink: 0; }
     .edit-toggle:hover { background: rgba(255,255,255,0.24); }
     .edit-toggle.active { background: rgba(231,111,81,0.85); border-color: rgba(231,111,81,0.9); }
     .edit-toggle .lock-icon { font-size: 0.85rem; }
+
+    /* ══════ PRINT STYLES ══════ */
+    @media print {
+      @page { size: A4 landscape; margin: 12mm 10mm; }
+
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+      body { background: #fff !important; font-size: 11pt; }
+
+      header, .edit-banner, .today-badge, .sync-badge,
+      .print-btn, .edit-toggle, .notice-edit-btn,
+      .cell-placeholder, .card-edit-btn { display: none !important; }
+
+      .notice-wrap { margin: 0 0 10px 0; padding: 0; max-width: 100%; }
+      .notice-box { border-radius: 4px; box-shadow: none; padding: 8px 12px; font-size: 9pt; background: #fffde7 !important; border: 1px solid #e0c840 !important; }
+      .notice-label { margin-bottom: 4px; }
+
+      main { padding: 0; max-width: 100%; }
+
+      /* print title above notice */
+      .print-title { display: block !important; font-size: 14pt; font-weight: 700; text-align: center; margin-bottom: 8px; color: #1a1814; letter-spacing: 0.06em; }
+
+      .weeks-wrap { display: flex !important; flex-direction: column; gap: 14px; }
+      .cards-wrap { display: none !important; }
+
+      .week-block { page-break-inside: avoid; break-inside: avoid; }
+
+      .week-label { font-size: 9pt; color: #555; margin-bottom: 4px; }
+
+      .table-wrap { box-shadow: none !important; border-radius: 0 !important; border: 1px solid #ccc; overflow: visible !important; }
+
+      table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+      th, td { border: 1px solid #bbb !important; padding: 5px 6px !important; }
+
+      th.dept-header { width: 72pt; font-size: 10pt; }
+      th.date-header { font-size: 9pt; }
+      th.date-header .date-day { font-size: 10pt; }
+      th.date-header .date-week { font-size: 8pt; }
+
+      th.date-header.today-col { background: #52b788 !important; }
+      th.date-header.today-col .date-day,
+      th.date-header.today-col .date-week { color: #fff !important; }
+      th.date-header.today-col::after { display: none; }
+
+      th.date-header.weekend-col { background: #efefef !important; }
+      th.date-header.fullday-col { background: #fff0ee !important; }
+
+      .dept-cell { font-size: 10pt; padding: 6px 8px !important; background: #f8f8f6 !important; }
+
+      .duty-cell { height: 36pt !important; min-width: 0 !important; }
+
+      .cell-text { font-size: 10pt; font-weight: 600; color: #1b4332 !important; }
+      .cell-fullday { font-size: 8pt; color: #c0392b !important; }
+
+      .duty-cell.filled { background: #d8f3dc !important; }
+      .duty-cell.weekend { background: #efefef !important; }
+      .duty-cell.fullday { background: #fff0ee !important; }
+      .duty-cell.today-col { background: #edfaf3 !important; border-left: 2px solid #52b788 !important; }
+      .duty-cell.today-col.filled { background: #b7e4c7 !important; }
+    }
 
     .edit-banner { display: none; background: #fff3cd; border-bottom: 2px solid #ffc107; color: #664d03; text-align: center; padding: 6px 16px; font-size: 0.8rem; font-weight: 500; }
     .edit-banner.show { display: block; }
@@ -311,6 +376,9 @@
       <div class="sync-dot loading" id="syncDot"></div>
       <span id="syncText">連線中…</span>
     </div>
+    <button class="print-btn" id="printBtn" title="列印班表">
+      <span>🖨️</span><span class="print-label">列印</span>
+    </button>
     <button class="edit-toggle" id="editToggle">
       <span class="lock-icon">🔒</span>
       <span class="toggle-label">檢視模式</span>
@@ -319,6 +387,9 @@
 </header>
 
 <div class="edit-banner" id="editBanner">✏️ 編輯模式已開啟，可修改日期、備考說明與填寫值班人員</div>
+
+<!-- print-only title -->
+<div class="print-title" style="display:none;" id="printTitle">下午值班表</div>
 
 <!-- ── Notice box ── -->
 <div class="notice-wrap">
@@ -896,6 +967,15 @@ function startCardEdit(btn, dateKey, deptId) {
   // focus after paint so keyboard shows on mobile
   requestAnimationFrame(() => { input.focus(); });
 }
+
+// ── Print ─────────────────────────────────────────────────
+document.getElementById('printBtn').addEventListener('click', () => {
+  // update print title with date range
+  const s = startDateEl.value.replace(/-/g,'/');
+  const e = endDateEl.value.replace(/-/g,'/');
+  document.getElementById('printTitle').textContent = `下午值班表　${s} ～ ${e}`;
+  window.print();
+});
 
 // ── Init ─────────────────────────────────────────────────
 async function init() {
