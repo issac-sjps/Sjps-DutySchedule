@@ -121,7 +121,8 @@
 
       table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 
-      th, td { border: 1px solid #bbb !important; padding: 5px 6px !important; }
+      th, td { border: 1.5px solid #999 !important; padding: 5px 6px !important; }
+      td.duty-cell.weekend, th.date-header.weekend-col { border-color: #aaa !important; }
 
       th.dept-header { width: 72pt; font-size: 10pt; }
       th.date-header { font-size: 9pt; }
@@ -131,7 +132,7 @@
       th.date-header.today-col { background: #52b788 !important; }
       th.date-header.today-col .date-day,
       th.date-header.today-col .date-week { color: #fff !important; }
-      th.date-header.today-col::after { display: none !important; content: none !important; }
+      th.date-header.today-col::after { content: '' !important; font-size: 0 !important; padding: 0 !important; margin: 0 !important; background: transparent !important; width: 0 !important; height: 0 !important; display: block !important; }
 
       th.date-header.weekend-col { background: #efefef !important; }
       th.date-header.fullday-col { background: #fff0ee !important; }
