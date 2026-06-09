@@ -91,7 +91,7 @@
 
     /* ══════ PRINT STYLES ══════ */
     @media print {
-      @page { size: A4 landscape; margin: 12mm 10mm; }
+      @page { size: A4 portrait; margin: 0.5cm; }
 
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
@@ -131,7 +131,7 @@
       th.date-header.today-col { background: #52b788 !important; }
       th.date-header.today-col .date-day,
       th.date-header.today-col .date-week { color: #fff !important; }
-      th.date-header.today-col::after { display: none; }
+      th.date-header.today-col::after { display: none !important; content: none !important; }
 
       th.date-header.weekend-col { background: #efefef !important; }
       th.date-header.fullday-col { background: #fff0ee !important; }
