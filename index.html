@@ -132,7 +132,7 @@
       th.date-header.today-col { background: #52b788 !important; }
       th.date-header.today-col .date-day,
       th.date-header.today-col .date-week { color: #fff !important; }
-      th.date-header.today-col::after { content: '' !important; font-size: 0 !important; padding: 0 !important; margin: 0 !important; background: transparent !important; width: 0 !important; height: 0 !important; display: block !important; }
+      th.date-header.today-col .today-th-tag { display: none !important; }
 
       th.date-header.weekend-col { background: #efefef !important; }
       th.date-header.fullday-col { background: #fff0ee !important; }
@@ -226,7 +226,7 @@
     th.date-header.today-col { background: var(--today-bg); }
     th.date-header.today-col .date-day { color: #fff; font-weight: 700; }
     th.date-header.today-col .date-week { color: rgba(255,255,255,0.8); }
-    th.date-header.today-col::after { content: '今天'; display: inline-block; margin-top: 3px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.12); border-radius: 20px; padding: 1px 6px; }
+    th.date-header.today-col .today-th-tag { display: inline-block; margin-top: 3px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.12); border-radius: 20px; padding: 1px 6px; }
 
     td { border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); padding: 0; vertical-align: middle; }
     td:last-child { border-right: none; }
@@ -704,7 +704,7 @@ function renderWeeks(dates) {
         (isFD && !isTd ? ' fullday-col' : '');
       const mm = String(d.getMonth()+1).padStart(2,'0');
       const dd = String(d.getDate()).padStart(2,'0');
-      th.innerHTML = `<span class="date-day">${mm}/${dd}</span><span class="date-week">（${WEEK_DAYS[d.getDay()]}）</span>`;
+      th.innerHTML = `<span class="date-day">${mm}/${dd}</span><span class="date-week">（${WEEK_DAYS[d.getDay()]}）</span>${isTd ? '<span class="today-th-tag">今天</span>' : ''}`;
       headRow.appendChild(th);
     });
     thead.appendChild(headRow);
@@ -974,21 +974,7 @@ document.getElementById('printBtn').addEventListener('click', () => {
   const s = startDateEl.value.replace(/-/g,'/');
   const e = endDateEl.value.replace(/-/g,'/');
   document.getElementById('printTitle').textContent = `下午值班表　${s} ～ ${e}`;
-
-  // Inject a temporary <style> that nukes ::after with visibility:hidden
-  // This is the most reliable cross-browser way to kill pseudo-elements before print
-  const killStyle = document.createElement('style');
-  killStyle.id = '__print-kill__';
-  killStyle.textContent = `th.date-header.today-col::after { visibility: hidden !important; font-size: 0 !important; content: '' !important; padding: 0 !important; margin: 0 !important; }`;
-  document.head.appendChild(killStyle);
-
   window.print();
-
-  // Remove after print dialog closes
-  setTimeout(() => {
-    const s = document.getElementById('__print-kill__');
-    if (s) s.remove();
-  }, 1000);
 });
 
 // ── Init ─────────────────────────────────────────────────
