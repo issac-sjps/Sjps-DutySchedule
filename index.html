@@ -971,11 +971,24 @@ function startCardEdit(btn, dateKey, deptId) {
 
 // ── Print ─────────────────────────────────────────────────
 document.getElementById('printBtn').addEventListener('click', () => {
-  // update print title with date range
   const s = startDateEl.value.replace(/-/g,'/');
   const e = endDateEl.value.replace(/-/g,'/');
   document.getElementById('printTitle').textContent = `下午值班表　${s} ～ ${e}`;
+
+  // Inject a temporary <style> that nukes ::after with visibility:hidden
+  // This is the most reliable cross-browser way to kill pseudo-elements before print
+  const killStyle = document.createElement('style');
+  killStyle.id = '__print-kill__';
+  killStyle.textContent = `th.date-header.today-col::after { visibility: hidden !important; font-size: 0 !important; content: '' !important; padding: 0 !important; margin: 0 !important; }`;
+  document.head.appendChild(killStyle);
+
   window.print();
+
+  // Remove after print dialog closes
+  setTimeout(() => {
+    const s = document.getElementById('__print-kill__');
+    if (s) s.remove();
+  }, 1000);
 });
 
 // ── Init ─────────────────────────────────────────────────
