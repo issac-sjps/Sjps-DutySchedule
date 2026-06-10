@@ -203,12 +203,14 @@
 
     .table-wrap { overflow-x: auto; border-radius: var(--radius); box-shadow: var(--shadow-lg); background: var(--surface); }
 
-    table { width: 100%; border-collapse: collapse; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th.dept-header { width: 100px; }
+    th.date-header { width: calc((100% - 100px) / 7); }
     thead tr { background: var(--surface2); }
 
     th { padding: 10px 12px; font-size: 0.76rem; font-weight: 500; color: var(--text-muted); text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; }
     th.dept-header { text-align: left; color: var(--text); font-weight: 700; font-size: 0.82rem; min-width: 90px; width: 100px; }
-    th.date-header { min-width: 80px; }
+    th.date-header { overflow: hidden; }
     th.date-header .date-day { display: block; font-size: 0.85rem; color: var(--text); font-weight: 600; font-family: 'DM Mono', monospace; }
     th.date-header .date-week { display: block; font-size: 0.68rem; color: var(--text-muted); margin-top: 1px; }
 
@@ -235,7 +237,7 @@
     .dept-cell { padding: 11px 14px; font-weight: 500; font-size: 0.88rem; background: var(--surface2); white-space: nowrap; display: flex; align-items: center; gap: 8px; }
     .dept-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
-    .duty-cell { min-width: 80px; height: 50px; position: relative; transition: background 0.15s; }
+    .duty-cell { height: 50px; position: relative; transition: background 0.15s; overflow: hidden; }
 
     /* weekend: grey, no edit */
     .duty-cell.weekend { background: var(--weekend-bg); cursor: default !important; }
@@ -261,7 +263,7 @@
     .duty-cell.filled:not(.weekend):not(.today-col):not(.fullday) { background: var(--filled); }
     .duty-cell.editing { background: var(--accent-light) !important; cursor: text; }
 
-    .cell-text { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.9rem; font-weight: 500; color: var(--filled-text); padding: 0 10px; }
+    .cell-text { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.88rem; font-weight: 500; color: var(--filled-text); padding: 0 4px; text-align: center; word-break: break-all; line-height: 1.25; overflow: hidden; }
     .duty-cell.today-col .cell-text { color: #1b4332; font-weight: 700; }
 
     .cell-placeholder { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.75rem; color: var(--border); }
