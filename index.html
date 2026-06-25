@@ -234,43 +234,38 @@
     td:last-child { border-right: none; }
     tr:last-child td { border-bottom: none; }
 
-    .dept-cell { padding: 11px 14px; font-weight: 500; font-size: 0.88rem; background: var(--surface2); white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+    /* dept name column: td itself carries the bg to avoid white gap */
+    td.dept-td { padding: 0; }
+    .dept-cell { padding: 11px 14px; font-weight: 600; font-size: 0.88rem; white-space: nowrap; display: flex; align-items: center; gap: 8px; height: 100%; }
     .dept-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
-    .duty-cell { height: 50px; position: relative; transition: background 0.15s; overflow: hidden; }
+    .duty-cell { height: 50px; position: relative; transition: background 0.15s; overflow: hidden; background: #fff; }
 
     /* weekend: grey, no edit */
     .duty-cell.weekend { background: var(--weekend-bg); cursor: default !important; }
     .duty-cell.weekend .cell-placeholder { display: none; }
 
-    /* fullday: light red, no edit */
-    .duty-cell.fullday {
-      background: var(--fullday-bg);
-      cursor: default !important;
-      border-left: 2px solid var(--fullday-border);
-    }
+    /* fullday: unified light red regardless of dept */
+    .duty-cell.fullday { background: #fff5f4 !important; cursor: default !important; border-left: 2px solid var(--fullday-border); }
     .duty-cell.fullday .cell-placeholder { display: none; }
 
     /* today: green */
-    .duty-cell.today-col { background: #edfaf3; border-left: 2px solid var(--today-bg); border-right: 2px solid var(--today-bg) !important; }
-    .duty-cell.today-col.filled { background: #b7e4c7; }
+    .duty-cell.today-col { background: #edfaf3 !important; border-left: 2px solid var(--today-bg); border-right: 2px solid var(--today-bg) !important; }
 
     body.edit-mode .duty-cell:not(.weekend):not(.fullday) { cursor: pointer; }
-    body.edit-mode .duty-cell:not(.weekend):not(.fullday):not(.today-col):hover { background: var(--accent-light); }
-    body.edit-mode .duty-cell.today-col:hover { background: #c7edcc; }
-    body.edit-mode .duty-cell.filled:not(.weekend):not(.fullday):not(.today-col):hover { background: #c7edcc; }
+    body.edit-mode .duty-cell:not(.weekend):not(.fullday):hover { filter: brightness(0.96); }
 
-    .duty-cell.filled:not(.weekend):not(.today-col):not(.fullday) { background: var(--filled); }
-    .duty-cell.editing { background: var(--accent-light) !important; cursor: text; }
+    .duty-cell.editing { background: #f0faf4 !important; cursor: text; filter: none !important; }
 
-    .cell-text { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.88rem; font-weight: 500; color: var(--filled-text); padding: 0 4px; text-align: center; word-break: break-all; line-height: 1.25; overflow: hidden; }
-    .duty-cell.today-col .cell-text { color: #1b4332; font-weight: 700; }
+    /* cell text: white bg, dept color for text (set via inline style) */
+    .cell-text { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.9rem; font-weight: 700; padding: 0 4px; text-align: center; word-break: break-all; line-height: 1.25; overflow: hidden; }
+    .duty-cell.today-col .cell-text { color: #1b6b3a !important; }
 
     .cell-placeholder { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.75rem; color: var(--border); }
     body:not(.edit-mode) .cell-placeholder { color: transparent; }
 
     /* fullday label inside cell */
-    .cell-fullday { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; color: var(--fullday-text); opacity: 0.7; }
+    .cell-fullday { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; color: var(--fullday-text); opacity: 0.75; }
 
     .cell-input { width: 100%; height: 100%; border: 2px solid var(--accent); background: #fff; font-family: 'Noto Sans TC', sans-serif; font-size: 0.9rem; text-align: center; outline: none; padding: 0 8px; }
 
@@ -718,7 +713,9 @@ function renderWeeks(dates) {
     DEPTS.forEach(dept => {
       const tr = document.createElement('tr');
       const tdDept = document.createElement('td');
-      tdDept.innerHTML = `<div class="dept-cell" style="background:${dept.rowBg}"><div class="dept-dot" style="background:${dept.color}"></div>${dept.name}</div>`;
+      tdDept.className = 'dept-td';
+      tdDept.style.background = dept.rowBg;
+      tdDept.innerHTML = `<div class="dept-cell"><div class="dept-dot" style="background:${dept.color}"></div><span style="color:${dept.color}">${dept.name}</span></div>`;
       tr.appendChild(tdDept);
 
       weekDates.forEach(d => {
@@ -729,10 +726,9 @@ function renderWeeks(dates) {
         const isTd = key === today;
         const td = document.createElement('td');
         td.className = 'duty-cell' +
-          (isWE         ? ' weekend'   : '') +
-          (isFD         ? ' fullday'   : '') +
-          (isTd         ? ' today-col' : '') +
-          (!isWE && !isFD && val ? ' filled' : '');
+          (isWE ? ' weekend' : '') +
+          (isFD ? ' fullday' : '') +
+          (isTd ? ' today-col' : '');
         td.dataset.date = key;
         td.dataset.dept = dept.id;
 
@@ -740,17 +736,14 @@ function renderWeeks(dates) {
           td.innerHTML = '';
         } else if (isFD) {
           td.innerHTML = `<div class="cell-fullday">全天班</div>`;
-          td.style.background = dept.rowBg;
         } else if (isTd) {
-          // today keeps green
           td.innerHTML = val
             ? `<div class="cell-text">${val}</div>`
             : `<div class="cell-placeholder">點擊填寫</div>`;
           td.addEventListener('click', () => { if (editMode) startEdit(td, key, dept.id); });
         } else {
-          td.style.background = val ? dept.filledBg : dept.rowBg;
           td.innerHTML = val
-            ? `<div class="cell-text">${val}</div>`
+            ? `<div class="cell-text" style="color:${dept.color}">${val}</div>`
             : `<div class="cell-placeholder">點擊填寫</div>`;
           td.addEventListener('click', () => { if (editMode) startEdit(td, key, dept.id); });
         }
@@ -796,9 +789,11 @@ function cancelEdit({ td, dateKey, deptId }) {
   const isTd = dateKey === todayStr();
   const dept = DEPTS.find(d => d.id === deptId);
   td.classList.remove('editing');
-  td.className = 'duty-cell' + (isTd ? ' today-col' : '') + (val ? ' filled' : '');
-  if (!isTd && dept) td.style.background = val ? dept.filledBg : dept.rowBg;
-  td.innerHTML = val ? `<div class="cell-text">${val}</div>` : `<div class="cell-placeholder">點擊填寫</div>`;
+  td.className = 'duty-cell' + (isTd ? ' today-col' : '');
+  td.style.background = '';
+  td.innerHTML = val
+    ? `<div class="cell-text" ${!isTd && dept ? `style="color:${dept.color}"` : ''}>${val}</div>`
+    : `<div class="cell-placeholder">點擊填寫</div>`;
   activeInput = null;
 }
 
@@ -806,9 +801,11 @@ async function commitEdit({ td, dateKey, deptId }, newVal) {
   const isTd = dateKey === todayStr();
   const dept = DEPTS.find(d => d.id === deptId);
   td.classList.remove('editing');
-  td.className = 'duty-cell' + (isTd ? ' today-col' : '') + (newVal ? ' filled' : '');
-  if (!isTd && dept) td.style.background = newVal ? dept.filledBg : dept.rowBg;
-  td.innerHTML = newVal ? `<div class="cell-text">${newVal}</div>` : `<div class="cell-placeholder">點擊填寫</div>`;
+  td.className = 'duty-cell' + (isTd ? ' today-col' : '');
+  td.style.background = '';
+  td.innerHTML = newVal
+    ? `<div class="cell-text" ${!isTd && dept ? `style="color:${dept.color}"` : ''}>${newVal}</div>`
+    : `<div class="cell-placeholder">點擊填寫</div>`;
   td.addEventListener('click', () => { if (editMode) startEdit(td, dateKey, deptId); });
   activeInput = null;
   const oldVal = getValue(dateKey, deptId);
