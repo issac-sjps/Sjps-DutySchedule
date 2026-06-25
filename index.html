@@ -427,10 +427,11 @@ const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
 const DEPTS = [
-  { id: 'academic', name: '教務處', color: '#2d6a4f' },
-  { id: 'student',  name: '學務處', color: '#e76f51' },
-  { id: 'general',  name: '總務處', color: '#457b9d' },
-  { id: 'guidance', name: '輔導室', color: '#a8834f' },
+  { id: 'academic', name: '教務處', color: '#2d6a4f', rowBg: '#eef7f2', filledBg: '#c8ecd4' },
+  { id: 'student',  name: '學務處', color: '#e76f51', rowBg: '#fef2ee', filledBg: '#fad5c8' },
+  { id: 'general',  name: '總務處', color: '#457b9d', rowBg: '#eef4f8', filledBg: '#c5dcea' },
+  { id: 'guidance', name: '輔導室', color: '#a8834f', rowBg: '#f7f2ec', filledBg: '#e8d8c0' },
+  { id: 'confroom', name: '人會室', color: '#7b5ea7', rowBg: '#f3eff8', filledBg: '#d9ceed' },
 ];
 
 const WEEK_DAYS  = ['日','一','二','三','四','五','六'];
@@ -717,7 +718,7 @@ function renderWeeks(dates) {
     DEPTS.forEach(dept => {
       const tr = document.createElement('tr');
       const tdDept = document.createElement('td');
-      tdDept.innerHTML = `<div class="dept-cell"><div class="dept-dot" style="background:${dept.color}"></div>${dept.name}</div>`;
+      tdDept.innerHTML = `<div class="dept-cell" style="background:${dept.rowBg}"><div class="dept-dot" style="background:${dept.color}"></div>${dept.name}</div>`;
       tr.appendChild(tdDept);
 
       weekDates.forEach(d => {
@@ -739,7 +740,15 @@ function renderWeeks(dates) {
           td.innerHTML = '';
         } else if (isFD) {
           td.innerHTML = `<div class="cell-fullday">全天班</div>`;
+          td.style.background = dept.rowBg;
+        } else if (isTd) {
+          // today keeps green
+          td.innerHTML = val
+            ? `<div class="cell-text">${val}</div>`
+            : `<div class="cell-placeholder">點擊填寫</div>`;
+          td.addEventListener('click', () => { if (editMode) startEdit(td, key, dept.id); });
         } else {
+          td.style.background = val ? dept.filledBg : dept.rowBg;
           td.innerHTML = val
             ? `<div class="cell-text">${val}</div>`
             : `<div class="cell-placeholder">點擊填寫</div>`;
@@ -783,18 +792,22 @@ function startEdit(td, dateKey, deptId) {
 }
 
 function cancelEdit({ td, dateKey, deptId }) {
-  const val = getValue(dateKey, deptId);
+  const val  = getValue(dateKey, deptId);
   const isTd = dateKey === todayStr();
+  const dept = DEPTS.find(d => d.id === deptId);
   td.classList.remove('editing');
   td.className = 'duty-cell' + (isTd ? ' today-col' : '') + (val ? ' filled' : '');
+  if (!isTd && dept) td.style.background = val ? dept.filledBg : dept.rowBg;
   td.innerHTML = val ? `<div class="cell-text">${val}</div>` : `<div class="cell-placeholder">點擊填寫</div>`;
   activeInput = null;
 }
 
 async function commitEdit({ td, dateKey, deptId }, newVal) {
   const isTd = dateKey === todayStr();
+  const dept = DEPTS.find(d => d.id === deptId);
   td.classList.remove('editing');
   td.className = 'duty-cell' + (isTd ? ' today-col' : '') + (newVal ? ' filled' : '');
+  if (!isTd && dept) td.style.background = newVal ? dept.filledBg : dept.rowBg;
   td.innerHTML = newVal ? `<div class="cell-text">${newVal}</div>` : `<div class="cell-placeholder">點擊填寫</div>`;
   td.addEventListener('click', () => { if (editMode) startEdit(td, dateKey, deptId); });
   activeInput = null;
