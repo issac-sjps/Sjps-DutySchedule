@@ -540,14 +540,21 @@ function isFullDay(d) {
   return t < _startDate.getTime() || t > _endDate.getTime();
 }
 
+function makeLocalDate(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 function getDates() {
   if (!startDateEl.value || !endDateEl.value) return [];
-  _startDate = new Date(startDateEl.value + 'T00:00:00');
-  _endDate   = new Date(endDateEl.value   + 'T00:00:00');
+  _startDate = makeLocalDate(startDateEl.value);
+  _endDate   = makeLocalDate(endDateEl.value);
   if (isNaN(_startDate) || isNaN(_endDate) || _endDate < _startDate) return [];
   const dates = [];
-  for (let d = new Date(_startDate); d <= _endDate; d.setDate(d.getDate() + 1)) {
-    dates.push(new Date(d));
+  const cur = new Date(_startDate);
+  while (cur <= _endDate) {
+    dates.push(new Date(cur));
+    cur.setDate(cur.getDate() + 1);
   }
   return dates;
 }
@@ -555,26 +562,44 @@ function getDates() {
 // Split into Mon-Sun weeks, padding each week to a full 7-day display
 function splitIntoWeeks(dates) {
   if (!dates.length) return [];
+
+  // Work with local YYYY-MM-DD strings to avoid any timezone drift
+  function addDays(dateStr, n) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d + n);
+    return dateStr2(dt);
+  }
+  function dateStr2(dt) {
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  }
+  function makeDateFromStr(s) {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  function getDow(s) { return makeDateFromStr(s).getDay(); } // 0=Sun,1=Mon,...
+
+  const firstStr = dateStr(dates[0]);
+  const lastStr  = dateStr(dates[dates.length - 1]);
+
+  // pad back to Monday
+  const dow = getDow(firstStr);
+  const backDays = dow === 0 ? 6 : dow - 1;
+  let cur = addDays(firstStr, -backDays);
+
+  // pad forward to Sunday
+  const endDow = getDow(lastStr);
+  const fwdDays = endDow === 0 ? 0 : 7 - endDow;
+  const endStr = addDays(lastStr, fwdDays);
+
   const weeks = [];
   let week = [];
-  // find start: go back to Monday
-  const start = new Date(dates[0]);
-  const dayOfWeek = start.getDay(); // 0=Sun
-  const daysBack = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // days back to get Monday
-  start.setDate(start.getDate() - daysBack);
-
-  // find end: go forward to Sunday
-  const end = new Date(dates[dates.length - 1]);
-  const endDow = end.getDay();
-  const daysForward = endDow === 0 ? 0 : 7 - endDow;
-  end.setDate(end.getDate() + daysForward);
-
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    week.push(new Date(d));
-    if (d.getDay() === 0) { // Sunday — end of week
+  while (cur <= endStr) {
+    week.push(makeDateFromStr(cur));
+    if (getDow(cur) === 0) { // Sunday
       weeks.push(week);
       week = [];
     }
+    cur = addDays(cur, 1);
   }
   if (week.length) weeks.push(week);
   return weeks;
