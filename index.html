@@ -520,7 +520,12 @@ function setEditMode(on) {
 editToggleBtn.addEventListener('click', () => setEditMode(!editMode));
 
 // ── Helpers ──────────────────────────────────────────────
-function dateStr(d) { return d.toISOString().split('T')[0]; }
+function dateStr(d) {
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
 function todayStr() { return dateStr(new Date()); }
 function isWeekend(d) { const w = d.getDay(); return w === 0 || w === 6; }
 
